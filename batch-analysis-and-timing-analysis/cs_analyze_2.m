@@ -13,14 +13,12 @@ if size(data2,3) > 1
    for i = find(trialtypes == 10)
     count = count + 1;
     data3(count,:) = data2(:,2,i+us_vector(length(us_vector)));
-    %data3(count,:) = data2(:,data2dim,i+us_vector(length(us_vector)));
     data3(count,:) = data3(count,:)  - mean(data3(count,1:sampling_rate));
     end 
 else
    for i = 1:size(data2,1)
     count = count + 1;
     data3(count,:) = data2(count,:);
-    %data3(count,:) = data2(:,data2dim,i+us_vector(length(us_vector)));
     data3(count,:) = data3(count,:)  - mean(data3(count,1:sampling_rate));
     end 
 end
