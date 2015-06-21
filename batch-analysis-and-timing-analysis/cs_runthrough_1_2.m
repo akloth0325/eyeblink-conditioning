@@ -13,10 +13,7 @@ end_of_pres = 1.53
 for J = start_at:(length(DJ))
     J
     load(DJ(J).name)
-%     offset = input('Offset?');
     cs_analyze_2;
     save(DJ(J).name)
-    %pause
-    %close all
 end
 clear all
