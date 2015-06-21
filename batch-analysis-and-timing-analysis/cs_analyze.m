@@ -13,14 +13,12 @@ if size(data2,3) > 1
    for i = find(trialtypes == 10)
     count = count + 1;
     data3(count,:) = data2(:,2,i+us_vector(length(us_vector)));
-    %data3(count,:) = data2(:,data2dim,i+us_vector(length(us_vector)));
     data3(count,:) = data3(count,:)  - mean(data3(count,1:sampling_rate));
     end 
 else
    for i = 1:size(data2,1)
     count = count + 1;
     data3(count,:) = data2(count,:);
-    %data3(count,:) = data2(:,data2dim,i+us_vector(length(us_vector)));
     data3(count,:) = data3(count,:)  - mean(data3(count,1:sampling_rate));
     end 
 end
@@ -69,26 +67,3 @@ for j = 1:count
         cs_only_averagevelocity(j) = (peak(1) - minn(1))/((peak(2) - minn(2))/(sampling_rate/25));
     end
 end
-
-% figure
-% subplot(2,1,1)
-% plot(mean(data3(find(cs_only_cr == 1),:)))
-% axis([0,2*sampling_rate,-0.05,1])
-% hold on
-% plot([1.25*sampling_rate,1.25*sampling_rate],[0,23],'k--')
-% plot([1.27*sampling_rate,1.27*sampling_rate],[0,23],'k--')
-% plot([sampling_rate,sampling_rate],[0,23],'k--')
-% hold off
-% subplot(2,1,2)
-% hold on
-% for k = 1:length(cs_only_cr)
-%     if cs_only_cr(k) == 1
-%        plot([cs_only_onset(k),cs_only_plus_minus_80(1,k)],[k,k],'bd-')
-%        plot([cs_only_plus_minus_80(1,k),cs_only_peak_time(k),cs_only_plus_minus_80(2,k)],[k,k,k],'rd-')
-%     end
-% end
-% plot([1.25*sampling_rate,1.25*sampling_rate],[0,23],'k--')
-% plot([1.27*sampling_rate,1.27*sampling_rate],[0,23],'k--')
-% plot([sampling_rate,sampling_rate],[0,23],'k--')
-% axis([0,2*sampling_rate,0,length(cs_only_cr)+1])
-% hold off
