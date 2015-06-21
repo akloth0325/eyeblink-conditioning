@@ -114,9 +114,6 @@ animalxdate_interval = zeros(number_animals*6,1);
 animalxdate_maxvelocity = zeros(number_animals*6,1);
 animalxdate_averagevelocity = zeros(number_animals*6,1);
 animalxdate_1090 = zeros(number_animals*6,1);
-%animalxdate_histpeak = zeros(1,length(1:50:4501));
-%animalxdate_histxhold = zeros(1,length(1:25:901));
-%animalxdate_histinterval = zeros(1,length(0:50:5000));
 
 for i = 1:number_animals
     for j = 1:6
@@ -187,65 +184,11 @@ for i = 1:number_animals
             animalxdate_maxvelocity((i-1)*6+j) = mean(temp_maxvelocity);
             animalxdate_averagevelocity((i-1)*6+j) = mean(temp_averagevelocity);
             animalxdate_1090((i-1)*6+j) = mean(temp_1090);
-            %animalxdate_histpeak = animalxdate_histpeak + histc(temp_peak(:,2),1:50:4501)';
-            %animalxdate_histxhold = animalxdate_histxhold + histc(temp_xhold,1:25:901);
-            %animalxdate_histinterval = animalxdate_histinterval + histc(temp_interval,0:50:5000);
         end
     end
 end
 
 close(h)
-
-
-% for i = 1:number_animals
-%     waitbar(i/(number_animals+6),h)
-%     eval(['peak_a',num2str(animal_list(i)),' = [];']);
-%     for j = 1:sum(cr_grid(i,:))
-%        eval(['current_trace = animal',num2str(animal_list(i)),'(j,:);']);
-%        [a,b] = max(current_trace(5500:10000));
-%        eval(['peak_a',num2str(animal_list(i)),'(j,1) = a;']);
-%        eval(['peak_a',num2str(animal_list(i)),'(j,2) = b;']);
-%     end
-%     eval(['m_t_a(i) = mean(peak_a',num2str(animal_list(i)),'(:,1));']);
-%     eval(['med_t_a(i) = median(peak_a',num2str(animal_list(i)),'(:,1));']);
-%     eval(['m_a_a(i) = mean(peak_a',num2str(animal_list(i)),'(:,2));']);
-%     eval(['med_a_a(i) = median(peak_a',num2str(animal_list(i)),'(:,2));']);
-% end
-%
-% for i = 7:12
-%     waitbar((number_animals+i-6)/(number_animals+6),h)
-%     eval(['peak_d',num2str(i),' = [];']);
-%     for j = 1:sum(cr_grid(i-6,:))
-%        eval(['current_trace = day',num2str(i),'(j,:);']);
-%        [a,b] = max(current_trace(5500:10000));
-%        eval(['peak_d',num2str(i),'(j,1) = a;']);
-%        eval(['peak_d',num2str(i),'(j,2) = b;']);
-%     end
-%     eval(['m_t_d(i-6) = mean(peak_d',num2str(i),'(:,1));']);
-%     eval(['med_t_d(i-6) = median(peak_d',num2str(i),'(:,1));']);
-%     eval(['m_a_d(i-6) = mean(peak_d',num2str(i),'(:,2));']);
-%     eval(['med_a_d(i-6) = median(peak_d',num2str(i),'(:,2));']);
-% end
-%
-% close(h)
-%
-% mean_total = mean(total);
-% sd_total = std(total,0,1);
-% for i = 1:size(total,1);
-%     [a,b] = max(total(i,5500:10000));
-%     peak_total(i,1) = a;
-%     peak_total(i,2) = b;
-% end
-% clear total
-%
-% figure
-% plot(mean_total);
-% peak_total = [];
-%
-% hold on
-%
-% plot(mean_total + sd_total,'b--')
-% plot(mean_total - sd_total,'b--')
 % hold off
 
 filename = input('Please enter a file name without the extension.', 's');
