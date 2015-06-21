@@ -1,0 +1,254 @@
+
+directoryname = uigetdir('Please select a directory to analyze...');
+cd(directoryname)
+
+
+DZ = dir;
+file_list = [];
+start_at = 3;
+
+if ~isequal(DZ(3).name(end-2:end),'mat')
+    start_at = 4;
+end
+
+for i = start_at:size(DZ)
+    file_list(i-start_at+1,1) = str2num(DZ(i).name(1:3));
+    file_list(i-start_at+1,2) = str2num(DZ(i).name(5:6));
+end
+
+animal_list = unique(file_list(:,1));
+number_animals = length(animal_list);
+file_grid = zeros(number_animals,6);
+cr_grid = zeros(number_animals,6);
+
+for i = 1:number_animals
+    for j = 1:size(file_list,1)
+        if file_list(j,1) == animal_list(i)
+            file_grid(i,file_list(j,2)-6) = 1;
+        end
+    end
+end
+
+day7 = [];
+day8 = [];
+day9 = [];
+day10 = [];
+day11 = [];
+day12 = [];
+total = [];
+mean_total = [];
+sd_total = [];
+animal_mean = [];
+animal_sd = [];
+
+for i = 1:number_animals
+    eval(['animal',num2str(animal_list(i)),' = [];']);
+end
+
+h = waitbar(0,'Please wait...');
+
+for i = 1:number_animals
+    for j = 1:6
+        waitbar(((i-1)*6+j)/(number_animals*6),h)
+        if file_grid(i,j) == 1
+            if animal_list(i) < 100
+                if j >= 1 && j <= 3
+                    if animal_list(i) < 10
+                        load(['00',num2str(animal_list(i)),'-0',num2str(j+6),'.mat'],'data3','cs_only_cr')
+                    else
+                        load(['0',num2str(animal_list(i)),'-0',num2str(j+6),'.mat'],'data3','cs_only_cr')
+                    end
+                    disp(['0',num2str(animal_list(i)),'-0',num2str(j+6),'.mat'])
+                else
+                    if animal_list(i) < 10
+                        load(['00',num2str(animal_list(i)),'-',num2str(j+6),'.mat'],'data3','cs_only_cr')
+                    else
+                        load(['0',num2str(animal_list(i)),'-',num2str(j+6),'.mat'],'data3','cs_only_cr')
+                    end
+                    disp(['0',num2str(animal_list(i)),'-',num2str(j+6),'.mat'])
+                end
+            else
+                if j >= 1 && j <= 3
+                    load([num2str(animal_list(i)),'-0',num2str(j+6),'.mat'],'data3','cs_only_cr')
+                    disp([num2str(animal_list(i)),'-0',num2str(j+6),'.mat'])
+                else
+                    load([num2str(animal_list(i)),'-',num2str(j+6),'.mat'],'data3','cs_only_cr')
+                    disp([num2str(animal_list(i)),'-',num2str(j+6),'.mat'])
+                end
+            end
+            sampling_rate = (size(data3,2)-1)/2;
+            crs = data3(find(cs_only_cr == 1),:);
+            if sampling_rate ~= 5000 && length(find(cs_only_cr == 1)) > 0
+                crs2 = [];
+                for q = 1:size(crs,1)
+                    crs2(q,:) = resample(crs(q,:),10001,sampling_rate*2+1);
+                end
+                clear crs
+                crs = crs2;
+                clear crs2
+            end
+            cr_grid(i,j) = length(find(cs_only_cr == 1));
+            if ~isempty(crs)
+                eval(['day',num2str(j+6),' = [day',num2str(j+6),'; crs];']);
+                eval(['animal',num2str(animal_list(i)),' = [animal',num2str(animal_list(i)),'; crs];']);
+                total = [total;crs];
+            end
+            clear('data3','cs_only_cr','crs')
+        end
+    end
+    flag = 0;
+    eval(['flag = length(animal',num2str(animal_list(i)),');']);
+    if flag == 0 || flag == 1
+        eval(['animal_mean = [animal_mean;mean(animal',num2str(animal_list(i)),')];']);
+    end
+end
+
+close(h)
+
+h = waitbar(0,'Please wait for analysis...');
+
+animalxdate_trace = zeros(number_animals*6,10001);
+animalxdate_peak = zeros(number_animals*6,2);
+animalxdate_xhold = zeros(number_animals*6,1);
+animalxdate_interval = zeros(number_animals*6,1);
+animalxdate_maxvelocity = zeros(number_animals*6,1);
+animalxdate_averagevelocity = zeros(number_animals*6,1);
+animalxdate_1090 = zeros(number_animals*6,1);
+%animalxdate_histpeak = zeros(1,length(1:50:4501));
+%animalxdate_histxhold = zeros(1,length(1:25:901));
+%animalxdate_histinterval = zeros(1,length(0:50:5000));
+
+for i = 1:number_animals
+    for j = 1:6
+        waitbar(((i-1)*6+j)/(6*number_animals),h);
+        temp_peak = [];
+        temp_trace = [];
+        temp_xhold = [];
+        temp_interval = [];
+        temp_10 = [];
+        temp_90 = [];
+        temp_1090 = [];
+        if cr_grid(i,j) == 0 || cr_grid(i,j) <= 2
+            animalxdate_trace((i-1)*6+j,:) = NaN;
+            animalxdate_peak((i-1)*6+j,:) = NaN;
+            animalxdate_xhold((i-1)*6+j) = NaN;
+            animalxdate_interval((i-1)*6+j) = NaN;
+            animalxdate_maxvelocity((i-1)*6+j) = NaN;
+            animalxdate_averagevelocity((i-1)*6+j) = NaN;
+            animalxdate_1090((i-1)*6+j) = NaN;
+        else
+            for k = 1:cr_grid(i,j)
+                if j == 1
+                    eval(['current_trace = animal',num2str(animal_list(i)),'(k,:);']);
+                else
+                    eval(['current_trace = animal',num2str(animal_list(i)),'(k+sum(cr_grid(i,1:j-1)),:);']);
+                end
+                sampling_rate = (size(current_trace,2)-1)/2;
+                temp_trace = [temp_trace; current_trace];
+                [a,b] = max(current_trace((sampling_rate):(1.5*sampling_rate)));
+                temp_xhold(k) = (find(current_trace((sampling_rate+1):(1.5*sampling_rate)) >= 0.05,1))/sampling_rate;
+                temp_peak(k,1) = a;
+                temp_peak(k,2) = (b+(0.1*sampling_rate))/sampling_rate;
+                temp_interval(k) = temp_peak(k,2) - temp_xhold(k);
+                temp_10(k) = (find(current_trace((sampling_rate+1):(1.5*sampling_rate)) >= 0.10*temp_peak(k,1),1))/sampling_rate;
+                temp_90(k) = (find(current_trace((sampling_rate+1):(1.5*sampling_rate)) >= 0.90*temp_peak(k,1),1))/sampling_rate;
+                temp_1090(k) = temp_90(k)-temp_10(k);
+                temp_data = [];
+                peak = [];
+                minn = [];
+                for p = (sampling_rate+50):25:(sampling_rate*1.5)
+                    temp_data = [temp_data, mean(current_trace((p-50):p))];
+                end
+                peak(1) = max(temp_data);
+                peak(2) = find(temp_data==max(temp_data),1);
+                if peak(2) == 1
+                    minn(1) = temp_data(1);
+                    minn(2) = 0;
+                else
+                    for p = peak(2):-1:2
+                        if (temp_data(p) - temp_data(p-1)) <= 0
+                            minn(1) = temp_data(p);
+                            minn(2) = p;
+                            break;
+                        elseif p == 2 && peak(2) ~= 1
+                            minn(1) = temp_data(1);
+                            minn(2) = 1;
+                        end
+                    end
+                end
+                temp_maxvelocity(k) = max(diff(temp_data))/(1/(sampling_rate/25));
+                temp_averagevelocity(k) = (peak(1) - minn(1))/((peak(2) - minn(2))/(sampling_rate/25));
+            end
+            animalxdate_peak((i-1)*6+j,1) = mean(temp_peak(:,1));
+            animalxdate_peak((i-1)*6+j,2) = mean(temp_peak(:,2));
+            animalxdate_xhold((i-1)*6+j) = mean(temp_xhold);
+            animalxdate_trace((i-1)*6+j,:) = mean(temp_trace);
+            animalxdate_interval((i-1)*6+j) = mean(temp_interval);
+            animalxdate_maxvelocity((i-1)*6+j) = mean(temp_maxvelocity);
+            animalxdate_averagevelocity((i-1)*6+j) = mean(temp_averagevelocity);
+            animalxdate_1090((i-1)*6+j) = mean(temp_1090);
+            %animalxdate_histpeak = animalxdate_histpeak + histc(temp_peak(:,2),1:50:4501)';
+            %animalxdate_histxhold = animalxdate_histxhold + histc(temp_xhold,1:25:901);
+            %animalxdate_histinterval = animalxdate_histinterval + histc(temp_interval,0:50:5000);
+        end
+    end
+end
+
+close(h)
+
+
+% for i = 1:number_animals
+%     waitbar(i/(number_animals+6),h)
+%     eval(['peak_a',num2str(animal_list(i)),' = [];']);
+%     for j = 1:sum(cr_grid(i,:))
+%        eval(['current_trace = animal',num2str(animal_list(i)),'(j,:);']);
+%        [a,b] = max(current_trace(5500:10000));
+%        eval(['peak_a',num2str(animal_list(i)),'(j,1) = a;']);
+%        eval(['peak_a',num2str(animal_list(i)),'(j,2) = b;']);
+%     end
+%     eval(['m_t_a(i) = mean(peak_a',num2str(animal_list(i)),'(:,1));']);
+%     eval(['med_t_a(i) = median(peak_a',num2str(animal_list(i)),'(:,1));']);
+%     eval(['m_a_a(i) = mean(peak_a',num2str(animal_list(i)),'(:,2));']);
+%     eval(['med_a_a(i) = median(peak_a',num2str(animal_list(i)),'(:,2));']);
+% end
+%
+% for i = 7:12
+%     waitbar((number_animals+i-6)/(number_animals+6),h)
+%     eval(['peak_d',num2str(i),' = [];']);
+%     for j = 1:sum(cr_grid(i-6,:))
+%        eval(['current_trace = day',num2str(i),'(j,:);']);
+%        [a,b] = max(current_trace(5500:10000));
+%        eval(['peak_d',num2str(i),'(j,1) = a;']);
+%        eval(['peak_d',num2str(i),'(j,2) = b;']);
+%     end
+%     eval(['m_t_d(i-6) = mean(peak_d',num2str(i),'(:,1));']);
+%     eval(['med_t_d(i-6) = median(peak_d',num2str(i),'(:,1));']);
+%     eval(['m_a_d(i-6) = mean(peak_d',num2str(i),'(:,2));']);
+%     eval(['med_a_d(i-6) = median(peak_d',num2str(i),'(:,2));']);
+% end
+%
+% close(h)
+%
+% mean_total = mean(total);
+% sd_total = std(total,0,1);
+% for i = 1:size(total,1);
+%     [a,b] = max(total(i,5500:10000));
+%     peak_total(i,1) = a;
+%     peak_total(i,2) = b;
+% end
+% clear total
+%
+% figure
+% plot(mean_total);
+% peak_total = [];
+%
+% hold on
+%
+% plot(mean_total + sd_total,'b--')
+% plot(mean_total - sd_total,'b--')
+% hold off
+
+filename = input('Please enter a file name without the extension.', 's');
+save(filename)
+clear all
+
